@@ -1,0 +1,18 @@
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        // 使用相对通用的 AGP 版本，若您本地环境不兼容可自行修改
+        classpath 'com.android.tools.build:gradle:8.1.0'
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+        maven { url "https://api.xposed.info/" }
+    }
+}

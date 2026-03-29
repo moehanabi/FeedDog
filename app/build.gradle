@@ -1,0 +1,33 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.example.feeddog'
+    // 以下版本号可根据您的 SDK 配置酌情更改
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.example.feeddog"
+        minSdk 24
+        targetSdk 34
+        versionCode 1
+        versionName "1.0"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+dependencies {
+    // 关键依赖：引入Xposed框架的API用于编译 (compileOnly编译时才需用到，不会打包进入apk引发冲突)
+    compileOnly 'de.robv.android.xposed:api:82'
+}

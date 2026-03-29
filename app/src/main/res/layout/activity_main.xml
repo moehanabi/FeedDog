@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="输入你要屏蔽的App包名 (如: com.xingin.xhs)"
+        android:textStyle="bold" />
+    <EditText
+        android:id="@+id/edit_pkg"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="填写包名" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="Activity名称 (界面的类名)"
+        android:textStyle="bold" />
+    <EditText
+        android:id="@+id/edit_act"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="填写Activity全类名" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="信息流View ID (控件的ID名称)"
+        android:textStyle="bold" />
+    <EditText
+        android:id="@+id/edit_vid"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="如 fcn 或 recycler_view" />
+
+    <Button
+        android:id="@+id/btn_add"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="添加屏蔽规则" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="长按下方列表中的规则可以删除"
+        android:textColor="#888888" />
+
+    <ListView
+        android:id="@+id/list_rules"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="8dp"
+        android:layout_weight="1" />
+
+</LinearLayout>
