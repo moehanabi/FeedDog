@@ -61,9 +61,15 @@ public class MainHook implements IXposedHookLoadPackage {
 
             for (int i = 0; i < rules.length(); i++) {
                 JSONObject rule = rules.getJSONObject(i);
-                if (rule.getString("pkg").equals(currentPkg)
-                        && rule.getString("act").equals(activityName)) {
-                    hideViewAggressively(activity, rule.getString("vid"), currentPkg);
+                if (!rule.optBoolean("enabled", true)) {
+                    continue;
+                }
+                if (currentPkg.equals(rule.optString("pkg"))
+                        && activityName.equals(rule.optString("act"))) {
+                    String viewId = rule.optString("vid", "");
+                    if (!viewId.isEmpty()) {
+                        hideViewAggressively(activity, viewId, currentPkg);
+                    }
                     return;
                 }
             }

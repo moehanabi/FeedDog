@@ -7,7 +7,7 @@
         android:allowBackup="true"
         android:label="FeedDog"
         android:supportsRtl="true"
-        android:theme="@android:style/Theme.DeviceDefault.Light">
+        android:theme="@style/FeedDogTheme">
         
         <activity android:name="com.example.feeddog.MainActivity" android:exported="true">
             <intent-filter>

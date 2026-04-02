@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/action_add_rule"
+        android:icon="@drawable/ic_add_flat"
+        android:showAsAction="always"
+        android:title="添加规则" />
+
+    <item
+        android:id="@+id/action_multi_toggle"
+        android:icon="@drawable/ic_multi_flat"
+        android:showAsAction="always"
+        android:title="开启多选" />
+
+    <item
+        android:id="@+id/action_more"
+        android:icon="@drawable/ic_more_flat"
+        android:showAsAction="always"
+        android:title="更多">
+
+        <menu>
+            <item
+                android:id="@+id/action_import_rules"
+                android:icon="@drawable/ic_import_flat"
+                android:title="导入规则" />
+            <item
+                android:id="@+id/action_export_rules"
+                android:icon="@drawable/ic_export_flat"
+                android:title="导出规则" />
+        </menu>
+    </item>
+
+</menu>
