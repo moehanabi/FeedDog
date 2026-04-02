@@ -1,7 +1,10 @@
 package com.example.feeddog;
 
 import android.app.Activity;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import org.json.JSONArray;
@@ -11,80 +14,95 @@ import de.robv.android.xposed.IXposedHookLoadPackage;
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.XSharedPreferences;
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam;
 
 public class MainHook implements IXposedHookLoadPackage {
 
-    private XSharedPreferences prefs;
+    private static final Uri RULES_URI = Uri.parse("content://com.example.feeddog.rules/rules");
 
     @Override
     public void handleLoadPackage(final LoadPackageParam lpparam) throws Throwable {
         if (lpparam.packageName.equals("com.example.feeddog")) {
             return;
         }
-        
-        // 尝试利用 XSharedPreferences 读取配置
-        if (prefs == null) {
-            prefs = new XSharedPreferences("com.example.feeddog", "feeddog_rules");
-            prefs.makeWorldReadable();
-        } else {
-            prefs.reload();
-        }
-        
-        String rulesString = prefs.getString("rules", "[]");
-        JSONArray rules = new JSONArray(rulesString);
-        
-        // 如果获取不到规则，做一下基础兜底（硬编码）防止读取失败
-        if (rules.length() == 0) {
-            rules = new JSONArray();
-            rules.put(new JSONObject().put("pkg", "com.xingin.xhs").put("act", "com.xingin.xhs.index.v2.IndexActivityV2").put("vid", "fcn"));
-            rules.put(new JSONObject().put("pkg", "tv.danmaku.bili").put("act", "tv.danmaku.bili.MainActivityV2").put("vid", "recycler_view"));
-            rules.put(new JSONObject().put("pkg", "com.bilibili.app.in").put("act", "tv.danmaku.bili.MainActivityV2").put("vid", "recycler_view"));
-        }
 
-        // 遍历所有的规则
-        for (int i = 0; i < rules.length(); i++) {
-            JSONObject rule = rules.getJSONObject(i);
-            String pkgName = rule.getString("pkg");
-            String actName = rule.getString("act");
-            String vidName = rule.getString("vid");
+        final String currentPkg = lpparam.packageName;
 
-            // 只有包名匹配才执行对应的 Hook
-            if (lpparam.packageName.equals(pkgName)) {
-                XposedBridge.log("FeedDog: matched rule for " + pkgName + " - " + actName);
-                
-                // 1. Hook onResume()
-                try {
-                    XposedHelpers.findAndHookMethod(actName, lpparam.classLoader, "onResume", new XC_MethodHook() {
-                        @Override
-                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                            hideViewAggressively((Activity) param.thisObject, vidName, lpparam.packageName);
-                        }
-                    });
-                } catch (Throwable t) {
-                    XposedBridge.log("FeedDog: onResume Hook Exception - " + t.getMessage());
+        // 1. Hook onResume()
+        try {
+            XposedHelpers.findAndHookMethod("android.app.Activity", lpparam.classLoader, "onResume", new XC_MethodHook() {
+                @Override
+                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                    applyRules((Activity) param.thisObject, currentPkg);
                 }
+            });
+        } catch (Throwable t) {
+            XposedBridge.log("FeedDog: onResume Hook Exception - " + t.getMessage());
+        }
 
-                // 2. Hook onCreate() 以捕捉早期渲染 (解决小红书初次加载时有短暂显示的bug)
-                try {
-                    XposedHelpers.findAndHookMethod(actName, lpparam.classLoader, "onCreate", Bundle.class, new XC_MethodHook() {
-                        @Override
-                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                            hideViewAggressively((Activity) param.thisObject, vidName, lpparam.packageName);
-                        }
-                    });
-                } catch (Throwable t) {
-                    XposedBridge.log("FeedDog: onCreate Hook Exception - " + t.getMessage());
+        // 2. Hook onCreate() 以捕捉早期渲染 (解决小红书初次加载时有短暂显示的bug)
+        try {
+            XposedHelpers.findAndHookMethod("android.app.Activity", lpparam.classLoader, "onCreate", Bundle.class, new XC_MethodHook() {
+                @Override
+                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                    applyRules((Activity) param.thisObject, currentPkg);
+                }
+            });
+        } catch (Throwable t) {
+            XposedBridge.log("FeedDog: onCreate Hook Exception - " + t.getMessage());
+        }
+    }
+
+    // 通过 ContentProvider 读取规则并应用到当前 Activity
+    private void applyRules(Activity activity, String currentPkg) {
+        try {
+            JSONArray rules = queryRules(activity);
+            String activityName = activity.getClass().getName();
+
+            for (int i = 0; i < rules.length(); i++) {
+                JSONObject rule = rules.getJSONObject(i);
+                if (rule.getString("pkg").equals(currentPkg)
+                        && rule.getString("act").equals(activityName)) {
+                    hideViewAggressively(activity, rule.getString("vid"), currentPkg);
+                    return;
                 }
             }
+        } catch (Throwable t) {
+            XposedBridge.log("FeedDog: applyRules Exception - " + t.getMessage());
         }
+    }
+
+    // 跨进程读取规则，优先 ContentProvider，回退 Settings.Global
+    private JSONArray queryRules(Activity activity) {
+        // 1. 优先通过 ContentProvider（对声明了足够 queries 的 App 有效）
+        try {
+            Cursor cursor = activity.getContentResolver().query(RULES_URI, null, null, null, null);
+            if (cursor != null) {
+                try {
+                    if (cursor.moveToFirst()) {
+                        return new JSONArray(cursor.getString(0));
+                    }
+                } finally {
+                    cursor.close();
+                }
+            }
+        } catch (Throwable ignored) { }
+
+        // 2. 回退到 Settings.Global（系统级 ContentProvider，不受包可见性限制）
+        try {
+            String json = Settings.Global.getString(activity.getContentResolver(), "feeddog_rules");
+            if (json != null) {
+                return new JSONArray(json);
+            }
+        } catch (Throwable ignored) { }
+
+        return new JSONArray();
     }
 
     // 辅助方法：结合基础和连续的 OnGlobalLayout 监听隐藏，以对付复杂的动态加载信息流
     private void hideViewAggressively(Activity activity, String viewIdName, String packageName) {
         if (activity == null) return;
-        
+
         int viewId = activity.getResources().getIdentifier(viewIdName, "id", packageName);
         if (viewId == 0) {
             return;

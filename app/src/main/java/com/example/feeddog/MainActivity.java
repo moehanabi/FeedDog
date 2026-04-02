@@ -3,6 +3,7 @@ package com.example.feeddog;
 import android.app.Activity;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -29,6 +30,14 @@ public class MainActivity extends Activity {
 
         // 现代 Android 建议不使用 MODE_WORLD_READABLE，这里我们使用私有结合文件权限来让模块读取
         prefs = getSharedPreferences("feeddog_rules", MODE_PRIVATE);
+
+        // 利用 root 自动授予写入系统设置的权限（Magisk 会弹一次授权提示）
+        new Thread(() -> {
+            try {
+                Runtime.getRuntime().exec(new String[]{"su", "-c",
+                    "pm grant com.example.feeddog android.permission.WRITE_SECURE_SETTINGS"}).waitFor();
+            } catch (Exception ignored) { }
+        }).start();
         
         EditText editPkg = findViewById(R.id.edit_pkg);
         EditText editAct = findViewById(R.id.edit_act);
@@ -116,6 +125,12 @@ public class MainActivity extends Activity {
 
     private void saveRules() {
         prefs.edit().putString("rules", rulesArray.toString()).apply();
+        // 同步写入 Settings.Global 作为跨进程传输通道（不受包可见性限制）
+        try {
+            Settings.Global.putString(getContentResolver(), "feeddog_rules", rulesArray.toString());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         // 设置首选项文件全局可读，这样 Xposed 模块可以读取它
         try {
             File prefsFile = new File(getApplicationInfo().dataDir, "shared_prefs/feeddog_rules.xml");
