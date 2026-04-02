@@ -9,7 +9,7 @@
         android:supportsRtl="true"
         android:theme="@style/FeedDogTheme">
         
-        <activity android:name="com.example.feeddog.MainActivity" android:exported="true">
+        <activity android:name="com.hanabi.feeddog.MainActivity" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -18,7 +18,7 @@
 
         <provider
             android:name=".RulesProvider"
-            android:authorities="com.example.feeddog.rules"
+            android:authorities="com.hanabi.feeddog.rules"
             android:exported="true" />
 
         <meta-data

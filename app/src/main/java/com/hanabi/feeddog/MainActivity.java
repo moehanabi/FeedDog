@@ -1,4 +1,4 @@
-package com.example.feeddog;
+package com.hanabi.feeddog;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -65,7 +65,7 @@ public class MainActivity extends Activity {
         new Thread(() -> {
             try {
                 Runtime.getRuntime().exec(new String[]{"su", "-c",
-                    "pm grant com.example.feeddog android.permission.WRITE_SECURE_SETTINGS"}).waitFor();
+                    "pm grant com.hanabi.feeddog android.permission.WRITE_SECURE_SETTINGS"}).waitFor();
             } catch (Exception ignored) { }
         }).start();
 

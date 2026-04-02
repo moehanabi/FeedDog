@@ -1,4 +1,4 @@
-package com.example.feeddog;
+package com.hanabi.feeddog;
 
 import android.app.Activity;
 import android.database.Cursor;
@@ -18,11 +18,11 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam;
 
 public class MainHook implements IXposedHookLoadPackage {
 
-    private static final Uri RULES_URI = Uri.parse("content://com.example.feeddog.rules/rules");
+    private static final Uri RULES_URI = Uri.parse("content://com.hanabi.feeddog.rules/rules");
 
     @Override
     public void handleLoadPackage(final LoadPackageParam lpparam) throws Throwable {
-        if (lpparam.packageName.equals("com.example.feeddog")) {
+        if (lpparam.packageName.equals("com.hanabi.feeddog")) {
             return;
         }
 

@@ -3,12 +3,12 @@ plugins {
 }
 
 android {
-    namespace 'com.example.feeddog'
+    namespace 'com.hanabi.feeddog'
     // 以下版本号可根据您的 SDK 配置酌情更改
     compileSdk 34
 
     defaultConfig {
-        applicationId "com.example.feeddog"
+        applicationId "com.hanabi.feeddog"
         minSdk 24
         targetSdk 34
         versionCode 1

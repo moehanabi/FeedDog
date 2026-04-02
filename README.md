@@ -44,7 +44,7 @@ FeedDog 是一个 LSPosed/Xposed 模块，用于按规则隐藏目标 App 中的
 ### 撤销 WRITE_SECURE_SETTINGS
 
 ```sh
-su -c pm revoke com.example.feeddog android.permission.WRITE_SECURE_SETTINGS
+su -c pm revoke com.hanabi.feeddog android.permission.WRITE_SECURE_SETTINGS
 ```
 
 ## 配置文件位置
@@ -54,7 +54,7 @@ su -c pm revoke com.example.feeddog android.permission.WRITE_SECURE_SETTINGS
 - 运行时规则（应用实际读写）：
 	- SharedPreferences 名称：`feeddog_rules`
 	- 键：`rules`
-	- 物理文件（设备端）：`/data/data/com.example.feeddog/shared_prefs/feeddog_rules.xml`
+	- 物理文件（设备端）：`/data/data/com.hanabi.feeddog/shared_prefs/feeddog_rules.xml`
 - 跨进程同步通道：
 	- `Settings.Global` 键：`feeddog_rules`
 	- 常见系统存放文件：`/data/system/users/0/settings_global.xml`
@@ -74,11 +74,11 @@ su -c settings delete global feeddog_rules
 方式 2（命令行，需 root）：
 
 ```sh
-su -c rm /data/data/com.example.feeddog/shared_prefs/feeddog_rules.xml
+su -c rm /data/data/com.hanabi.feeddog/shared_prefs/feeddog_rules.xml
 ```
 
 也可直接清空应用数据（会一并清除本地配置）：
 
 ```sh
-su -c pm clear com.example.feeddog
+su -c pm clear com.hanabi.feeddog
 ```

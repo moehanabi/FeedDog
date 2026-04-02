@@ -1,4 +1,4 @@
-package com.example.feeddog;
+package com.hanabi.feeddog;
 
 import android.content.ContentProvider;
 import android.content.ContentValues;
@@ -9,7 +9,7 @@ import android.net.Uri;
 
 public class RulesProvider extends ContentProvider {
 
-    public static final String AUTHORITY = "com.example.feeddog.rules";
+    public static final String AUTHORITY = "com.hanabi.feeddog.rules";
     public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/rules");
 
     @Override
