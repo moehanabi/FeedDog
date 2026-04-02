@@ -1,0 +1,23 @@
+[
+  {
+    "pkg": "com.xingin.xhs",
+    "act": "com.xingin.xhs.index.v2.IndexActivityV2",
+    "vid": "fcn",
+    "note": "小红书首页发现栏",
+    "enabled": true
+  },
+  {
+    "pkg": "tv.danmaku.bili",
+    "act": "tv.danmaku.bili.MainActivityV2",
+    "vid": "recycler_view",
+    "note": "哔哩哔哩首页推荐栏",
+    "enabled": true
+  },
+  {
+    "pkg": "com.bilibili.app.in",
+    "act": "tv.danmaku.bili.MainActivityV2",
+    "vid": "recycler_view",
+    "note": "哔哩哔哩国际版首页推荐栏",
+    "enabled": true
+  }
+]

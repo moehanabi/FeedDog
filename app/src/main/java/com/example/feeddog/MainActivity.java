@@ -481,14 +481,22 @@ public class MainActivity extends Activity {
 
         try {
             if (rulesArray.length() == 0) {
-                rulesArray.put(createRule("com.xingin.xhs", "com.xingin.xhs.index.v2.IndexActivityV2", "fcn", "", true));
-                rulesArray.put(createRule("tv.danmaku.bili", "tv.danmaku.bili.MainActivityV2", "recycler_view", "", true));
-                rulesArray.put(createRule("com.bilibili.app.in", "tv.danmaku.bili.MainActivityV2", "recycler_view", "", true));
+                rulesArray = loadDefaultRulesFromConfig();
                 persistRules();
             }
             prefs.edit().putBoolean("rules_initialized", true).commit();
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    private JSONArray loadDefaultRulesFromConfig() {
+        try (InputStream in = getAssets().open("default_rules.json")) {
+            String content = readUtf8(in);
+            return sanitizeRules(new JSONArray(content));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new JSONArray();
         }
     }
 
@@ -626,11 +634,17 @@ public class MainActivity extends Activity {
             if (in == null) {
                 throw new IllegalStateException("无法读取导入文件");
             }
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    builder.append(line);
-                }
+            builder.append(readUtf8(in));
+        }
+        return builder.toString();
+    }
+
+    private String readUtf8(InputStream in) throws Exception {
+        StringBuilder builder = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                builder.append(line);
             }
         }
         return builder.toString();
