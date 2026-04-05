@@ -23,3 +23,8 @@ app/build/
 bin/
 gen/
 out/
+
+# Keystore and signatures
+*.jks
+*.keystore
+keystore.properties
