@@ -2,8 +2,6 @@
 
 FeedDog 是一个 LSPosed/Xposed 模块，用于按规则隐藏目标 App 中的信息流视图。
 
-模块通过 `包名 + Activity + ViewID` 进行匹配，在目标页面渲染时自动将对应视图隐藏。
-
 ## 运行与使用
 
 1. 安装 APK。
@@ -19,7 +17,9 @@ FeedDog 是一个 LSPosed/Xposed 模块，用于按规则隐藏目标 App 中的
 
 ## 说明
 
-- 如果目标 App UI 结构变化，请更新对应规则中的 `Activity` 或 `ViewID`。
+- 推荐使用 *开发助手* 的 *查看布局* 功能提取规则所需数据。
+  - View ID 不需要填写前面的 `R.id.`
+- 如果目标 App UI 结构变化，请更新对应的规则。
 
 ## 权限相关
 
