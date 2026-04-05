@@ -3,21 +3,66 @@
     "pkg": "com.xingin.xhs",
     "act": "com.xingin.xhs.index.v2.IndexActivityV2",
     "vid": "fcn",
+    "text": "",
+    "cls": "",
     "note": "小红书首页发现栏",
-    "enabled": true
+    "enabled": true,
+    "useInvisible": true,
+    "hideParentLevel": 0
+  },
+  {
+    "pkg": "com.xingin.xhs",
+    "act": "com.xingin.xhs.index.v2.IndexActivityV2",
+    "vid": "f17",
+    "text": "",
+    "cls": "",
+    "note": "小红书首页附近栏",
+    "enabled": true,
+    "useInvisible": true,
+    "hideParentLevel": 0
   },
   {
     "pkg": "tv.danmaku.bili",
     "act": "tv.danmaku.bili.MainActivityV2",
     "vid": "recycler_view",
+    "text": "",
+    "cls": "",
     "note": "哔哩哔哩首页推荐栏",
-    "enabled": true
+    "enabled": true,
+    "useInvisible": true,
+    "hideParentLevel": 0
   },
   {
     "pkg": "com.bilibili.app.in",
     "act": "tv.danmaku.bili.MainActivityV2",
     "vid": "recycler_view",
+    "text": "",
+    "cls": "",
     "note": "哔哩哔哩国际版首页推荐栏",
-    "enabled": true
+    "enabled": true,
+    "useInvisible": true,
+    "hideParentLevel": 0
+  },
+  {
+    "pkg": "com.bilibili.app.in",
+    "act": "com.bilibili.ship.theseus.playlist.UnitedPlaylistActivity",
+    "vid": "cover",
+    "text": "",
+    "cls": "",
+    "note": "哔哩哔哩国际版稍后再看视频页推荐视频",
+    "enabled": true,
+    "useInvisible": false,
+    "hideParentLevel": 1
+  },
+  {
+    "pkg": "com.bilibili.app.in",
+    "act": "com.bilibili.ship.theseus.detail.UnitedBizDetailsActivity",
+    "vid": "cover",
+    "text": "",
+    "cls": "",
+    "note": "哔哩哔哩国际版普通视频页推荐视频",
+    "enabled": true,
+    "useInvisible": false,
+    "hideParentLevel": 1
   }
 ]
