@@ -687,15 +687,50 @@ public class MainActivity extends Activity {
         try {
             String content = readUtf8(uri);
             JSONArray importedArray = new JSONArray(content);
-            rulesArray = sanitizeRules(importedArray);
+            JSONArray cleanImported = sanitizeRules(importedArray);
+            
+            int addedCount = 0;
+            int skippedCount = 0;
+            
+            for (int i = 0; i < cleanImported.length(); i++) {
+                JSONObject newRule = cleanImported.getJSONObject(i);
+                boolean exists = false;
+                
+                for (int j = 0; j < rulesArray.length(); j++) {
+                    JSONObject existingRule = rulesArray.getJSONObject(j);
+                    if (isRuleSame(existingRule, newRule)) {
+                        exists = true;
+                        break;
+                    }
+                }
+                
+                if (!exists) {
+                    rulesArray.put(newRule);
+                    addedCount++;
+                } else {
+                    skippedCount++;
+                }
+            }
+            
             persistRules();
             refreshRuleDisplays();
             exitMultiSelectMode();
-            Toast.makeText(this, "已导入 " + rulesArray.length() + " 条规则", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "成功：" + addedCount + "条新规则，跳过：" + skippedCount + "条重复规则", Toast.LENGTH_LONG).show();
         } catch (Exception e) {
             e.printStackTrace();
             Toast.makeText(this, "导入失败，请确认文件为有效JSON数组", Toast.LENGTH_SHORT).show();
         }
+    }
+    
+    private boolean isRuleSame(JSONObject r1, JSONObject r2) {
+        return r1.optString("pkg", "").equals(r2.optString("pkg", "")) &&
+               r1.optString("act", "").equals(r2.optString("act", "")) &&
+               r1.optString("vid", "").equals(r2.optString("vid", "")) &&
+               r1.optString("text", "").equals(r2.optString("text", "")) &&
+               r1.optString("cls", "").equals(r2.optString("cls", "")) &&
+               r1.optInt("hideParentLevel", 0) == r2.optInt("hideParentLevel", 0) &&
+               r1.optBoolean("useInvisible", true) == r2.optBoolean("useInvisible", true) &&
+               r1.optString("note", "").equals(r2.optString("note", ""));
     }
 
     private void exportRulesToUri(Uri uri) {
