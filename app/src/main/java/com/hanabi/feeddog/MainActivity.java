@@ -181,6 +181,7 @@ public class MainActivity extends Activity {
         EditText editTxt = addDialogInput(container, "按文本隐藏 (可留空)", "", false);
         EditText editCls = addDialogInput(container, "按控件类名隐藏 (可留空)", "", false);
         EditText editNote = addDialogInput(container, "备注（可选）", "", false);
+        android.widget.RadioGroup rgVisibility = addDialogRadioGroup(container, true);
 
         AlertDialog.Builder builder = newDialogBuilder()
                 .setTitle("添加规则")
@@ -196,6 +197,7 @@ public class MainActivity extends Activity {
             String txt = editTxt.getText().toString().trim();
             String cls = editCls.getText().toString().trim();
             String note = editNote.getText().toString().trim();
+            boolean useInv = ((android.widget.RadioButton) rgVisibility.getTag()).isChecked();
 
             if (pkg.isEmpty() || act.isEmpty() || (vid.isEmpty() && txt.isEmpty() && cls.isEmpty())) {
                 Toast.makeText(this, "请至少填写完整包名、Activity并提供一个隐藏标识(ID/文本/类名)", Toast.LENGTH_SHORT).show();
@@ -203,7 +205,7 @@ public class MainActivity extends Activity {
             }
 
             try {
-                rulesArray.put(createRule(pkg, act, vid, txt, cls, note, true));
+                rulesArray.put(createRule(pkg, act, vid, txt, cls, note, true, useInv));
                 persistRules();
                 refreshRuleDisplays();
                 exitMultiSelectMode();
@@ -348,6 +350,7 @@ public class MainActivity extends Activity {
             EditText editTxt = addDialogInput(container, "按文本隐藏 (如：推荐)", rule.optString("text", ""), false);
             EditText editCls = addDialogInput(container, "按类名隐藏 (如：com.xxx.RecommendView)", rule.optString("cls", ""), false);
             EditText editNote = addDialogInput(container, "备注（可选）", rule.optString("note", ""), false);
+            android.widget.RadioGroup rgVisibility = addDialogRadioGroup(container, rule.optBoolean("useInvisible", true));
 
             AlertDialog.Builder builder = newDialogBuilder()
                     .setTitle("编辑规则")
@@ -363,6 +366,7 @@ public class MainActivity extends Activity {
                 String txt = editTxt.getText().toString().trim();
                 String cls = editCls.getText().toString().trim();
                 String note = editNote.getText().toString().trim();
+                boolean useInv = ((android.widget.RadioButton) rgVisibility.getTag()).isChecked();
 
                 if (pkg.isEmpty() || act.isEmpty() || (vid.isEmpty() && txt.isEmpty() && cls.isEmpty())) {
                     Toast.makeText(this, "请至少填写完整包名、Activity并提供一个隐藏标识(ID/文本/类名)", Toast.LENGTH_SHORT).show();
@@ -376,6 +380,7 @@ public class MainActivity extends Activity {
                     rule.put("text", txt);
                     rule.put("cls", cls);
                     rule.put("note", note);
+                    rule.put("useInvisible", useInv);
                     if (!rule.has("enabled")) {
                         rule.put("enabled", true);
                     }
@@ -458,6 +463,47 @@ public class MainActivity extends Activity {
         return input;
     }
 
+    private android.widget.RadioGroup addDialogRadioGroup(LinearLayout container, boolean useInvisible) {
+        TextView titleView = new TextView(this);
+        titleView.setText("隐藏方式选择：");
+        titleView.setTextColor(COLOR_INPUT_TEXT);
+        titleView.setTextSize(14f);
+        
+        LinearLayout.LayoutParams titleParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        titleParams.topMargin = dp(10);
+        titleView.setLayoutParams(titleParams);
+        container.addView(titleView);
+
+        android.widget.RadioGroup radioGroup = new android.widget.RadioGroup(this);
+        radioGroup.setOrientation(android.widget.RadioGroup.VERTICAL);
+        LinearLayout.LayoutParams groupParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        groupParams.topMargin = dp(2);
+        radioGroup.setLayoutParams(groupParams);
+
+        android.widget.RadioButton rbInv = new android.widget.RadioButton(this);
+        rbInv.setText("INVISIBLE (保留占位，防塌陷)");
+        rbInv.setTextColor(COLOR_INPUT_TEXT);
+        
+        android.widget.RadioButton rbGone = new android.widget.RadioButton(this);
+        rbGone.setText("GONE (完全删除，不留白)");
+        rbGone.setTextColor(COLOR_INPUT_TEXT);
+
+        radioGroup.addView(rbInv);
+        radioGroup.addView(rbGone);
+
+        if (useInvisible) {
+            rbInv.setChecked(true);
+        } else {
+            rbGone.setChecked(true);
+        }
+
+        radioGroup.setTag(rbInv);
+        container.addView(radioGroup);
+        return radioGroup;
+    }
+
     private int dp(int value) {
         return (int) (value * getResources().getDisplayMetrics().density);
     }
@@ -518,7 +564,7 @@ public class MainActivity extends Activity {
         }
     }
 
-    private JSONObject createRule(String pkg, String act, String vid, String text, String cls, String note, boolean enabled) throws Exception {
+    private JSONObject createRule(String pkg, String act, String vid, String text, String cls, String note, boolean enabled, boolean useInvisible) throws Exception {
         JSONObject rule = new JSONObject();
         rule.put("pkg", pkg);
         rule.put("act", act);
@@ -527,6 +573,7 @@ public class MainActivity extends Activity {
         rule.put("cls", cls);
         rule.put("note", note);
         rule.put("enabled", enabled);
+        rule.put("useInvisible", useInvisible);
         return rule;
     }
 
@@ -649,7 +696,8 @@ public class MainActivity extends Activity {
             }
 
             boolean enabled = obj.optBoolean("enabled", true);
-            clean.put(createRule(pkg, act, vid, txt, cls, note, enabled));
+            boolean useInvisible = obj.optBoolean("useInvisible", true);
+            clean.put(createRule(pkg, act, vid, txt, cls, note, enabled, useInvisible));
         }
         return clean;
     }
@@ -719,6 +767,7 @@ public class MainActivity extends Activity {
             String txt = rule.optString("text", "");
             String cls = rule.optString("cls", "");
             boolean enabled = rule.optBoolean("enabled", true);
+            boolean useInv = rule.optBoolean("useInvisible", true);
 
             if (!note.isEmpty()) {
                 holder.title.setText(note);
@@ -729,6 +778,7 @@ public class MainActivity extends Activity {
                 if (!vid.isEmpty()) detailStr += "\nViewID: " + vid;
                 if (!txt.isEmpty()) detailStr += "\nText: " + txt;
                 if (!cls.isEmpty()) detailStr += "\nClass: " + cls;
+                detailStr += "\n隐藏方式: " + (useInv ? "INVISIBLE" : "GONE");
                 holder.detail.setText(detailStr);
                 holder.detail.setVisibility(View.VISIBLE);
             }

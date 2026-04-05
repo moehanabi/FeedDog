@@ -66,19 +66,22 @@ public class MainHook implements IXposedHookLoadPackage {
                 }
                 if (currentPkg.equals(rule.optString("pkg"))
                         && activityName.equals(rule.optString("act"))) {
+                    
+                    boolean useInvisible = rule.optBoolean("useInvisible", true);
+                    
                     String viewId = rule.optString("vid", "");
                     if (!viewId.isEmpty()) {
-                        hideViewAggressively(activity, viewId, currentPkg);
+                        hideViewAggressively(activity, viewId, currentPkg, useInvisible);
                     }
                     
                     String textToHide = rule.optString("text", "");
                     if (!textToHide.isEmpty()) {
-                        hideViewByTextAggressively(activity, textToHide);
+                        hideViewByTextAggressively(activity, textToHide, useInvisible);
                     }
                     
                     String classToHide = rule.optString("cls", "");
                     if (!classToHide.isEmpty()) {
-                        hideViewByClassAggressively(activity, classToHide);
+                        hideViewByClassAggressively(activity, classToHide, useInvisible);
                     }
                     // 注：去掉了此处的 return; 以支持同一页面的多条规则同时生效
                 }
@@ -116,7 +119,7 @@ public class MainHook implements IXposedHookLoadPackage {
     }
 
     // 辅助方法：结合基础和连续的 OnGlobalLayout 监听隐藏，以对付复杂的动态加载信息流
-    private void hideViewAggressively(Activity activity, String viewIdName, String packageName) {
+    private void hideViewAggressively(Activity activity, String viewIdName, String packageName, final boolean useInvisible) {
         if (activity == null) return;
 
         final int viewId = activity.getResources().getIdentifier(viewIdName, "id", packageName);
@@ -127,38 +130,37 @@ public class MainHook implements IXposedHookLoadPackage {
         try {
             final View decorView = activity.getWindow().getDecorView();
             // 第一遍主动遍历隐藏
-            traverseAndHideById(decorView, viewId);
+            traverseAndHideById(decorView, viewId, useInvisible);
 
             // 挂载全局视图树渲染监听器持续捕捉新加载出来的元素
             decorView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
                 @Override
                 public void onGlobalLayout() {
-                    traverseAndHideById(decorView, viewId);
+                    traverseAndHideById(decorView, viewId, useInvisible);
                 }
             });
         } catch (Throwable ignored) { }
     }
 
     // 递归遍历整个视图树，把*所有*符合 ID 的控件都找出来干掉（而不是只能找到第一个）
-    private void traverseAndHideById(View view, int targetId) {
+    private void traverseAndHideById(View view, int targetId, boolean useInvisible) {
         if (view == null) return;
 
-        if (view.getId() == targetId && view.getVisibility() != View.GONE) {
-            // 注意：这里我们用 GONE 还是 INVISIBLE？
-            // 之前用的是 INVISIBLE。统一用 GONE 通常更彻底（不会占位），但如果是特定布局怕塌陷，可以自行视情况改为 INVISIBLE
-            view.setVisibility(View.GONE);
+        int targetVisibility = useInvisible ? View.INVISIBLE : View.GONE;
+        if (view.getId() == targetId && view.getVisibility() != targetVisibility) {
+            view.setVisibility(targetVisibility);
         }
 
         if (view instanceof android.view.ViewGroup) {
             android.view.ViewGroup viewGroup = (android.view.ViewGroup) view;
             for (int i = 0; i < viewGroup.getChildCount(); i++) {
-                traverseAndHideById(viewGroup.getChildAt(i), targetId);
+                traverseAndHideById(viewGroup.getChildAt(i), targetId, useInvisible);
             }
         }
     }
 
     // 辅助方法：结合全局视图树渲染监听器，遍历视图树根据文本内容隐藏
-    private void hideViewByTextAggressively(final Activity activity, final String targetText) {
+    private void hideViewByTextAggressively(final Activity activity, final String targetText, final boolean useInvisible) {
         if (activity == null || targetText == null || targetText.isEmpty()) return;
 
         try {
@@ -167,23 +169,23 @@ public class MainHook implements IXposedHookLoadPackage {
             decorView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
                 @Override
                 public void onGlobalLayout() {
-                    traverseAndHideByText(decorView, targetText);
+                    traverseAndHideByText(decorView, targetText, useInvisible);
                 }
             });
         } catch (Throwable ignored) { }
     }
 
     // 递归遍历视图树，寻找文本包含 targetText 的 TextView 或 Button 并隐藏
-    private void traverseAndHideByText(View view, String targetText) {
+    private void traverseAndHideByText(View view, String targetText, boolean useInvisible) {
         if (view == null) return;
+
+        int targetVisibility = useInvisible ? View.INVISIBLE : View.GONE;
 
         // 检查当前 View 是否是 TextView 或其子类（Button也是TextView的子类）
         if (view instanceof android.widget.TextView) {
             CharSequence text = ((android.widget.TextView) view).getText();
-            if (text != null && text.toString().contains(targetText) && view.getVisibility() != View.GONE) {
-                // 如果是信息流（如小红书/B站），为了避免留下大块白板，可能需要隐藏其父容器
-                // 这里暂且隐藏当前文本控件，如果想隐藏外层卡片（容器），通常需要调用 view.getParent() 向上查找
-                view.setVisibility(View.GONE); 
+            if (text != null && text.toString().contains(targetText) && view.getVisibility() != targetVisibility) {
+                view.setVisibility(targetVisibility); 
             }
         }
 
@@ -191,13 +193,13 @@ public class MainHook implements IXposedHookLoadPackage {
         if (view instanceof android.view.ViewGroup) {
             android.view.ViewGroup viewGroup = (android.view.ViewGroup) view;
             for (int i = 0; i < viewGroup.getChildCount(); i++) {
-                traverseAndHideByText(viewGroup.getChildAt(i), targetText);
+                traverseAndHideByText(viewGroup.getChildAt(i), targetText, useInvisible);
             }
         }
     }
 
     // 辅助方法：结合全局视图树渲染监听器，遍历视图树根据类名隐藏
-    private void hideViewByClassAggressively(final Activity activity, final String targetClassName) {
+    private void hideViewByClassAggressively(final Activity activity, final String targetClassName, final boolean useInvisible) {
         if (activity == null || targetClassName == null || targetClassName.isEmpty()) return;
 
         try {
@@ -205,26 +207,28 @@ public class MainHook implements IXposedHookLoadPackage {
             decorView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
                 @Override
                 public void onGlobalLayout() {
-                    traverseAndHideByClass(decorView, targetClassName);
+                    traverseAndHideByClass(decorView, targetClassName, useInvisible);
                 }
             });
         } catch (Throwable ignored) { }
     }
 
     // 递归遍历视图树，寻找类名为 targetClassName 的节点并隐藏
-    private void traverseAndHideByClass(View view, String targetClassName) {
+    private void traverseAndHideByClass(View view, String targetClassName, boolean useInvisible) {
         if (view == null) return;
 
+        int targetVisibility = useInvisible ? View.INVISIBLE : View.GONE;
+
         // 检查当前 View 的类名是否匹配
-        if (view.getClass().getName().equals(targetClassName) && view.getVisibility() != View.GONE) {
-            view.setVisibility(View.GONE);
+        if (view.getClass().getName().equals(targetClassName) && view.getVisibility() != targetVisibility) {
+            view.setVisibility(targetVisibility);
         }
 
         // 如果是 ViewGroup，递归遍历其所有子 View
         if (view instanceof android.view.ViewGroup) {
             android.view.ViewGroup viewGroup = (android.view.ViewGroup) view;
             for (int i = 0; i < viewGroup.getChildCount(); i++) {
-                traverseAndHideByClass(viewGroup.getChildAt(i), targetClassName);
+                traverseAndHideByClass(viewGroup.getChildAt(i), targetClassName, useInvisible);
             }
         }
     }
