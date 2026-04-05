@@ -70,6 +70,16 @@ public class MainHook implements IXposedHookLoadPackage {
                     if (!viewId.isEmpty()) {
                         hideViewAggressively(activity, viewId, currentPkg);
                     }
+                    
+                    String textToHide = rule.optString("text", "");
+                    if (!textToHide.isEmpty()) {
+                        hideViewByTextAggressively(activity, textToHide);
+                    }
+                    
+                    String classToHide = rule.optString("cls", "");
+                    if (!classToHide.isEmpty()) {
+                        hideViewByClassAggressively(activity, classToHide);
+                    }
                     return;
                 }
             }
@@ -133,5 +143,77 @@ public class MainHook implements IXposedHookLoadPackage {
                 }
             });
         } catch (Throwable ignored) { }
+    }
+
+    // 辅助方法：结合全局视图树渲染监听器，遍历视图树根据文本内容隐藏
+    private void hideViewByTextAggressively(final Activity activity, final String targetText) {
+        if (activity == null || targetText == null || targetText.isEmpty()) return;
+
+        try {
+            final View decorView = activity.getWindow().getDecorView();
+            // 这里使用 OnGlobalLayoutListener 持续监听视图树变化
+            decorView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+                @Override
+                public void onGlobalLayout() {
+                    traverseAndHideByText(decorView, targetText);
+                }
+            });
+        } catch (Throwable ignored) { }
+    }
+
+    // 递归遍历视图树，寻找文本包含 targetText 的 TextView 或 Button 并隐藏
+    private void traverseAndHideByText(View view, String targetText) {
+        if (view == null) return;
+
+        // 检查当前 View 是否是 TextView 或其子类（Button也是TextView的子类）
+        if (view instanceof android.widget.TextView) {
+            CharSequence text = ((android.widget.TextView) view).getText();
+            if (text != null && text.toString().contains(targetText) && view.getVisibility() != View.GONE) {
+                // 如果是信息流（如小红书/B站），为了避免留下大块白板，可能需要隐藏其父容器
+                // 这里暂且隐藏当前文本控件，如果想隐藏外层卡片（容器），通常需要调用 view.getParent() 向上查找
+                view.setVisibility(View.GONE); 
+            }
+        }
+
+        // 如果是 ViewGroup，递归遍历其所有子 View
+        if (view instanceof android.view.ViewGroup) {
+            android.view.ViewGroup viewGroup = (android.view.ViewGroup) view;
+            for (int i = 0; i < viewGroup.getChildCount(); i++) {
+                traverseAndHideByText(viewGroup.getChildAt(i), targetText);
+            }
+        }
+    }
+
+    // 辅助方法：结合全局视图树渲染监听器，遍历视图树根据类名隐藏
+    private void hideViewByClassAggressively(final Activity activity, final String targetClassName) {
+        if (activity == null || targetClassName == null || targetClassName.isEmpty()) return;
+
+        try {
+            final View decorView = activity.getWindow().getDecorView();
+            decorView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+                @Override
+                public void onGlobalLayout() {
+                    traverseAndHideByClass(decorView, targetClassName);
+                }
+            });
+        } catch (Throwable ignored) { }
+    }
+
+    // 递归遍历视图树，寻找类名为 targetClassName 的节点并隐藏
+    private void traverseAndHideByClass(View view, String targetClassName) {
+        if (view == null) return;
+
+        // 检查当前 View 的类名是否匹配
+        if (view.getClass().getName().equals(targetClassName) && view.getVisibility() != View.GONE) {
+            view.setVisibility(View.GONE);
+        }
+
+        // 如果是 ViewGroup，递归遍历其所有子 View
+        if (view instanceof android.view.ViewGroup) {
+            android.view.ViewGroup viewGroup = (android.view.ViewGroup) view;
+            for (int i = 0; i < viewGroup.getChildCount(); i++) {
+                traverseAndHideByClass(viewGroup.getChildAt(i), targetClassName);
+            }
+        }
     }
 }

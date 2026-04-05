@@ -177,35 +177,43 @@ public class MainActivity extends Activity {
         LinearLayout container = createDialogFormContainer();
         EditText editPkg = addDialogInput(container, "包名", "", true);
         EditText editAct = addDialogInput(container, "Activity 全类名", "", false);
-        EditText editVid = addDialogInput(container, "信息流 View ID (控件的 ID 名称)，如 fcn 或 recycler_view", "", false);
+        EditText editVid = addDialogInput(container, "View ID (可留空)", "", false);
+        EditText editTxt = addDialogInput(container, "按文本隐藏 (可留空)", "", false);
+        EditText editCls = addDialogInput(container, "按控件类名隐藏 (可留空)", "", false);
         EditText editNote = addDialogInput(container, "备注（可选）", "", false);
 
-        showStyledDialog(newDialogBuilder()
+        AlertDialog.Builder builder = newDialogBuilder()
                 .setTitle("添加规则")
                 .setView(container)
-                .setPositiveButton("添加", (dialog, which) -> {
-                    String pkg = editPkg.getText().toString().trim();
-                    String act = editAct.getText().toString().trim();
-                    String vid = editVid.getText().toString().trim();
-                    String note = editNote.getText().toString().trim();
+                .setPositiveButton("添加", null)
+                .setNegativeButton("取消", null);
 
-                    if (pkg.isEmpty() || act.isEmpty() || vid.isEmpty()) {
-                        Toast.makeText(this, "请填写完整信息", Toast.LENGTH_SHORT).show();
-                        return;
-                    }
+        AlertDialog dialog = showStyledDialog(builder);
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+            String pkg = editPkg.getText().toString().trim();
+            String act = editAct.getText().toString().trim();
+            String vid = editVid.getText().toString().trim();
+            String txt = editTxt.getText().toString().trim();
+            String cls = editCls.getText().toString().trim();
+            String note = editNote.getText().toString().trim();
 
-                    try {
-                        rulesArray.put(createRule(pkg, act, vid, note, true));
-                        persistRules();
-                        refreshRuleDisplays();
-                        exitMultiSelectMode();
-                        Toast.makeText(this, "规则已添加，请重启目标App生效", Toast.LENGTH_SHORT).show();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        Toast.makeText(this, "添加失败", Toast.LENGTH_SHORT).show();
-                    }
-                })
-                .setNegativeButton("取消", null));
+            if (pkg.isEmpty() || act.isEmpty() || (vid.isEmpty() && txt.isEmpty() && cls.isEmpty())) {
+                Toast.makeText(this, "请至少填写完整包名、Activity并提供一个隐藏标识(ID/文本/类名)", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            try {
+                rulesArray.put(createRule(pkg, act, vid, txt, cls, note, true));
+                persistRules();
+                refreshRuleDisplays();
+                exitMultiSelectMode();
+                Toast.makeText(this, "规则已添加，请重启目标App生效", Toast.LENGTH_SHORT).show();
+                dialog.dismiss();
+            } catch (Exception e) {
+                e.printStackTrace();
+                Toast.makeText(this, "添加失败", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private void enterMultiSelectMode() {
@@ -336,40 +344,50 @@ public class MainActivity extends Activity {
             LinearLayout container = createDialogFormContainer();
             EditText editPkg = addDialogInput(container, "填写包名", rule.optString("pkg", ""), true);
             EditText editAct = addDialogInput(container, "填写Activity全类名", rule.optString("act", ""), false);
-            EditText editVid = addDialogInput(container, "如 fcn 或 recycler_view", rule.optString("vid", ""), false);
+            EditText editVid = addDialogInput(container, "View ID (如不按ID隐藏可留空)", rule.optString("vid", ""), false);
+            EditText editTxt = addDialogInput(container, "按文本隐藏 (如：推荐)", rule.optString("text", ""), false);
+            EditText editCls = addDialogInput(container, "按类名隐藏 (如：com.xxx.RecommendView)", rule.optString("cls", ""), false);
             EditText editNote = addDialogInput(container, "备注（可选）", rule.optString("note", ""), false);
 
-            showStyledDialog(newDialogBuilder()
+            AlertDialog.Builder builder = newDialogBuilder()
                     .setTitle("编辑规则")
                     .setView(container)
-                    .setPositiveButton("保存", (dialog, which) -> {
-                        String pkg = editPkg.getText().toString().trim();
-                        String act = editAct.getText().toString().trim();
-                        String vid = editVid.getText().toString().trim();
-                        String note = editNote.getText().toString().trim();
+                    .setPositiveButton("保存", null)
+                    .setNegativeButton("取消", null);
 
-                        if (pkg.isEmpty() || act.isEmpty() || vid.isEmpty()) {
-                            Toast.makeText(this, "请填写完整信息", Toast.LENGTH_SHORT).show();
-                            return;
-                        }
+            AlertDialog dialog = showStyledDialog(builder);
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+                String pkg = editPkg.getText().toString().trim();
+                String act = editAct.getText().toString().trim();
+                String vid = editVid.getText().toString().trim();
+                String txt = editTxt.getText().toString().trim();
+                String cls = editCls.getText().toString().trim();
+                String note = editNote.getText().toString().trim();
 
-                        try {
-                            rule.put("pkg", pkg);
-                            rule.put("act", act);
-                            rule.put("vid", vid);
-                            rule.put("note", note);
-                            if (!rule.has("enabled")) {
-                                rule.put("enabled", true);
-                            }
-                            persistRules();
-                            refreshRuleDisplays();
-                            Toast.makeText(this, "规则已更新", Toast.LENGTH_SHORT).show();
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                            Toast.makeText(this, "更新失败", Toast.LENGTH_SHORT).show();
-                        }
-                    })
-                    .setNegativeButton("取消", null));
+                if (pkg.isEmpty() || act.isEmpty() || (vid.isEmpty() && txt.isEmpty() && cls.isEmpty())) {
+                    Toast.makeText(this, "请至少填写完整包名、Activity并提供一个隐藏标识(ID/文本/类名)", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                try {
+                    rule.put("pkg", pkg);
+                    rule.put("act", act);
+                    rule.put("vid", vid);
+                    rule.put("text", txt);
+                    rule.put("cls", cls);
+                    rule.put("note", note);
+                    if (!rule.has("enabled")) {
+                        rule.put("enabled", true);
+                    }
+                    persistRules();
+                    refreshRuleDisplays();
+                    Toast.makeText(this, "规则已更新", Toast.LENGTH_SHORT).show();
+                    dialog.dismiss();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    Toast.makeText(this, "更新失败", Toast.LENGTH_SHORT).show();
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
             Toast.makeText(this, "读取规则失败", Toast.LENGTH_SHORT).show();
@@ -500,11 +518,13 @@ public class MainActivity extends Activity {
         }
     }
 
-    private JSONObject createRule(String pkg, String act, String vid, String note, boolean enabled) throws Exception {
+    private JSONObject createRule(String pkg, String act, String vid, String text, String cls, String note, boolean enabled) throws Exception {
         JSONObject rule = new JSONObject();
         rule.put("pkg", pkg);
         rule.put("act", act);
         rule.put("vid", vid);
+        rule.put("text", text);
+        rule.put("cls", cls);
         rule.put("note", note);
         rule.put("enabled", enabled);
         return rule;
@@ -621,13 +641,15 @@ public class MainActivity extends Activity {
             String pkg = obj.optString("pkg", "").trim();
             String act = obj.optString("act", "").trim();
             String vid = obj.optString("vid", "").trim();
+            String txt = obj.optString("text", "").trim();
+            String cls = obj.optString("cls", "").trim();
             String note = obj.optString("note", "").trim();
-            if (pkg.isEmpty() || act.isEmpty() || vid.isEmpty()) {
+            if (pkg.isEmpty() || act.isEmpty() || (vid.isEmpty() && txt.isEmpty() && cls.isEmpty())) {
                 continue;
             }
 
             boolean enabled = obj.optBoolean("enabled", true);
-            clean.put(createRule(pkg, act, vid, note, enabled));
+            clean.put(createRule(pkg, act, vid, txt, cls, note, enabled));
         }
         return clean;
     }
@@ -694,6 +716,8 @@ public class MainActivity extends Activity {
             String pkg = rule.optString("pkg", "");
             String act = rule.optString("act", "");
             String vid = rule.optString("vid", "");
+            String txt = rule.optString("text", "");
+            String cls = rule.optString("cls", "");
             boolean enabled = rule.optBoolean("enabled", true);
 
             if (!note.isEmpty()) {
@@ -701,7 +725,11 @@ public class MainActivity extends Activity {
                 holder.detail.setVisibility(View.GONE);
             } else {
                 holder.title.setText("包名: " + pkg);
-                holder.detail.setText("Activity: " + act + "\nViewID: " + vid);
+                String detailStr = "Activity: " + act;
+                if (!vid.isEmpty()) detailStr += "\nViewID: " + vid;
+                if (!txt.isEmpty()) detailStr += "\nText: " + txt;
+                if (!cls.isEmpty()) detailStr += "\nClass: " + cls;
+                holder.detail.setText(detailStr);
                 holder.detail.setVisibility(View.VISIBLE);
             }
 
