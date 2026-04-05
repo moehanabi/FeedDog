@@ -557,7 +557,11 @@ public class MainActivity extends Activity {
         Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
         intent.setType("application/json");
-        intent.putExtra(Intent.EXTRA_TITLE, "feeddog_rules.json");
+        
+        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyyMMdd_HHmmss", java.util.Locale.getDefault());
+        String filename = "feeddog_rules_" + sdf.format(new java.util.Date()) + ".json";
+        
+        intent.putExtra(Intent.EXTRA_TITLE, filename);
         startActivityForResult(intent, REQUEST_EXPORT_RULES);
     }
 
