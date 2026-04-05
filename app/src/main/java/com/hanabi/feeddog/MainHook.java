@@ -80,7 +80,7 @@ public class MainHook implements IXposedHookLoadPackage {
                     if (!classToHide.isEmpty()) {
                         hideViewByClassAggressively(activity, classToHide);
                     }
-                    return;
+                    // 注：去掉了此处的 return; 以支持同一页面的多条规则同时生效
                 }
             }
         } catch (Throwable t) {
@@ -119,30 +119,42 @@ public class MainHook implements IXposedHookLoadPackage {
     private void hideViewAggressively(Activity activity, String viewIdName, String packageName) {
         if (activity == null) return;
 
-        int viewId = activity.getResources().getIdentifier(viewIdName, "id", packageName);
+        final int viewId = activity.getResources().getIdentifier(viewIdName, "id", packageName);
         if (viewId == 0) {
             return;
         }
 
-        // 1. 尝试直接主动隐藏，使用 INVISIBLE 代替 GONE 防止父布局塌陷导致露出底部黑色背景
-        View targetView = activity.findViewById(viewId);
-        if (targetView != null) {
-            targetView.setVisibility(View.INVISIBLE);
-        }
-
-        // 2. 提供连续检查：挂载全局视图树渲染监听器（解决App布局被异步延迟渲染出来的问题）
         try {
-            View decorView = activity.getWindow().getDecorView();
+            final View decorView = activity.getWindow().getDecorView();
+            // 第一遍主动遍历隐藏
+            traverseAndHideById(decorView, viewId);
+
+            // 挂载全局视图树渲染监听器持续捕捉新加载出来的元素
             decorView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
                 @Override
                 public void onGlobalLayout() {
-                    View v = activity.findViewById(viewId);
-                    if (v != null && v.getVisibility() != View.INVISIBLE) {
-                        v.setVisibility(View.INVISIBLE);
-                    }
+                    traverseAndHideById(decorView, viewId);
                 }
             });
         } catch (Throwable ignored) { }
+    }
+
+    // 递归遍历整个视图树，把*所有*符合 ID 的控件都找出来干掉（而不是只能找到第一个）
+    private void traverseAndHideById(View view, int targetId) {
+        if (view == null) return;
+
+        if (view.getId() == targetId && view.getVisibility() != View.GONE) {
+            // 注意：这里我们用 GONE 还是 INVISIBLE？
+            // 之前用的是 INVISIBLE。统一用 GONE 通常更彻底（不会占位），但如果是特定布局怕塌陷，可以自行视情况改为 INVISIBLE
+            view.setVisibility(View.GONE);
+        }
+
+        if (view instanceof android.view.ViewGroup) {
+            android.view.ViewGroup viewGroup = (android.view.ViewGroup) view;
+            for (int i = 0; i < viewGroup.getChildCount(); i++) {
+                traverseAndHideById(viewGroup.getChildAt(i), targetId);
+            }
+        }
     }
 
     // 辅助方法：结合全局视图树渲染监听器，遍历视图树根据文本内容隐藏
