@@ -175,9 +175,9 @@ public class MainActivity extends Activity {
 
     private void showAddRuleDialog() {
         LinearLayout container = createDialogFormContainer();
-        EditText editPkg = addDialogInput(container, "填写包名", "", true);
-        EditText editAct = addDialogInput(container, "填写Activity全类名", "", false);
-        EditText editVid = addDialogInput(container, "如 fcn 或 recycler_view", "", false);
+        EditText editPkg = addDialogInput(container, "包名", "", true);
+        EditText editAct = addDialogInput(container, "Activity 全类名", "", false);
+        EditText editVid = addDialogInput(container, "信息流 View ID (控件的 ID 名称)，如 fcn 或 recycler_view", "", false);
         EditText editNote = addDialogInput(container, "备注（可选）", "", false);
 
         showStyledDialog(newDialogBuilder()
