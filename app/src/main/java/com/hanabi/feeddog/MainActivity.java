@@ -175,14 +175,14 @@ public class MainActivity extends Activity {
 
     private void showAddRuleDialog() {
         LinearLayout container = createDialogFormContainer();
-        EditText editPkg = addDialogInput(container, "包名", "", true);
-        EditText editAct = addDialogInput(container, "Activity 全类名", "", false);
-        EditText editVid = addDialogInput(container, "View ID (可留空)", "", false);
-        EditText editTxt = addDialogInput(container, "按文本隐藏 (可留空)", "", false);
-        EditText editCls = addDialogInput(container, "按控件类名隐藏 (可留空)", "", false);
-        EditText editParent = addDialogInput(container, "屏蔽外层第 N 个父控件 (0 或留空表示只屏蔽自身)", "", false);
+        EditText editPkg = addDialogInput(container, "包名", "输入应用包名", "", true);
+        EditText editAct = addDialogInput(container, "Activity 全类名", "输入全类名", "", false);
+        EditText editVid = addDialogInput(container, "View ID", "可留空", "", false);
+        EditText editTxt = addDialogInput(container, "按文本隐藏", "可留空", "", false);
+        EditText editCls = addDialogInput(container, "按控件类名隐藏", "可留空", "", false);
+        EditText editParent = addDialogInput(container, "屏蔽外层第 N 个父控件", "0 或留空表示只屏蔽自身", "", false);
         editParent.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
-        EditText editNote = addDialogInput(container, "备注（可选）", "", false);
+        EditText editNote = addDialogInput(container, "备注", "可选", "", false);
         android.widget.RadioGroup rgVisibility = addDialogRadioGroup(container, true);
 
         AlertDialog.Builder builder = newDialogBuilder()
@@ -354,17 +354,17 @@ public class MainActivity extends Activity {
             JSONObject rule = rulesArray.getJSONObject(position);
 
             LinearLayout container = createDialogFormContainer();
-            EditText editPkg = addDialogInput(container, "填写包名", rule.optString("pkg", ""), true);
-            EditText editAct = addDialogInput(container, "填写Activity全类名", rule.optString("act", ""), false);
-            EditText editVid = addDialogInput(container, "View ID (如不按ID隐藏可留空)", rule.optString("vid", ""), false);
-            EditText editTxt = addDialogInput(container, "按文本隐藏 (如：推荐)", rule.optString("text", ""), false);
-            EditText editCls = addDialogInput(container, "按类名隐藏 (如：com.xxx.RecommendView)", rule.optString("cls", ""), false);
+            EditText editPkg = addDialogInput(container, "包名", "输入应用包名", rule.optString("pkg", ""), true);
+            EditText editAct = addDialogInput(container, "Activity 全类名", "输入全类名", rule.optString("act", ""), false);
+            EditText editVid = addDialogInput(container, "View ID", "可留空", rule.optString("vid", ""), false);
+            EditText editTxt = addDialogInput(container, "按文本隐藏", "可留空", rule.optString("text", ""), false);
+            EditText editCls = addDialogInput(container, "按控件类名隐藏", "可留空", rule.optString("cls", ""), false);
             
             int existingParentLevel = rule.optInt("hideParentLevel", 0);
-            EditText editParent = addDialogInput(container, "屏蔽外层第 N 个父控件 (0或留空表示只屏蔽自身)", existingParentLevel == 0 ? "" : String.valueOf(existingParentLevel), false);
+            EditText editParent = addDialogInput(container, "屏蔽外层第 N 个父控件", "0 或留空表示只屏蔽自身", existingParentLevel == 0 ? "" : String.valueOf(existingParentLevel), false);
             editParent.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
             
-            EditText editNote = addDialogInput(container, "备注（可选）", rule.optString("note", ""), false);
+            EditText editNote = addDialogInput(container, "备注", "可选", rule.optString("note", ""), false);
             android.widget.RadioGroup rgVisibility = addDialogRadioGroup(container, rule.optBoolean("useInvisible", true));
 
             AlertDialog.Builder builder = newDialogBuilder()
@@ -466,7 +466,18 @@ public class MainActivity extends Activity {
         return container;
     }
 
-    private EditText addDialogInput(LinearLayout container, String hint, String text, boolean isFirst) {
+    private EditText addDialogInput(LinearLayout container, String title, String hint, String text, boolean isFirst) {
+        TextView titleView = new TextView(this);
+        titleView.setText(title);
+        titleView.setTextColor(COLOR_INPUT_TEXT);
+        titleView.setTextSize(14f);
+        
+        LinearLayout.LayoutParams titleParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        titleParams.topMargin = isFirst ? dp(8) : dp(10);
+        titleView.setLayoutParams(titleParams);
+        container.addView(titleView);
+
         EditText input = new EditText(this);
         input.setHint(hint);
         input.setText(text);
@@ -481,7 +492,7 @@ public class MainActivity extends Activity {
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
         );
-        params.topMargin = isFirst ? dp(8) : dp(10);
+        params.topMargin = dp(4);
         input.setLayoutParams(params);
         container.addView(input);
         return input;
